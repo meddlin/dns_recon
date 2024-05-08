@@ -2,6 +2,7 @@
 
 ###### Imports ######
 import pprint
+import csv
 import collections.abc
 from dns_recon import Resolv
 
@@ -15,15 +16,29 @@ def list_to_string(data_list):
 
 def csv_report(domain_list):
     '''CSV report.'''
-    print(f"Domain Name,A Record,AAAA Record,NS Record,SPF Record,DMARC Record")
-    for dl in domain_list:
-        domain_name = dl['domain']
-        record_a = dl['domain_record']['A']
-        record_aaaa = dl['domain_record']['AAAA']
-        record_ns = list_to_string(dl['domain_record']['NS']) if isinstance(dl['domain_record']['NS'], collections.abc.Sequence) else dl['domain_record']['NS']
-        record_spf = list_to_string(dl['domain_record']['SPF']) if isinstance(dl['domain_record']['SPF'], collections.abc.Sequence) else dl['domain_record']['SPF']
-        record_dmarc = list_to_string(dl['domain_record']['DMARC']) if isinstance(dl['domain_record']['DMARC'], collections.abc.Sequence) else dl['domain_record']['DMARC']
-        print(f"{domain_name},{record_a},{record_aaaa},{record_ns},{record_spf},{record_dmarc}")
+    record_dict = {
+        'Domain Name': '',
+        'A Record': '', 
+        'AAAA Record': '', 
+        'NS Record': '', 
+        'SPF Record': '', 
+        'DMARC Record': ''
+    }
+    print(",".join(record_dict.keys()))
+
+    with open('dns_recon_output.csv', 'w', newline='') as file:
+        file_writer = csv.DictWriter(file, fieldnames=record_dict.keys())
+        file_writer.writeheader()
+
+        for dl in domain_list:
+            print(','.join(['{0}'.format(v) for _,v in record_dict.items()])) # surely prints values, unsure if pythonic
+            record_dict['Domain Name'] = dl['domain']
+            record_dict['A Record'] = dl['domain_record']['A']
+            record_dict['AAAA Record'] = dl['domain_record']['AAAA']
+            record_dict['NS Record'] = list_to_string(dl['domain_record']['NS']) if isinstance(dl['domain_record']['NS'], collections.abc.Sequence) else dl['domain_record']['NS']
+            record_dict['SPF Record'] = list_to_string(dl['domain_record']['SPF']) if isinstance(dl['domain_record']['SPF'], collections.abc.Sequence) else dl['domain_record']['SPF']
+            record_dict['DMARC Record'] = list_to_string(dl['domain_record']['DMARC']) if isinstance(dl['domain_record']['DMARC'], collections.abc.Sequence) else dl['domain_record']['DMARC']
+            file_writer.writerow(record_dict)
 
 def idomain(domain):
     '''List of tasks for each domain.'''
